@@ -128,7 +128,7 @@ if args.problem:
     x = prettytable.PrettyTable(["PR","title","problem"])
 
     for pull in pulls:
-        if "bump" in pull["keywords"] and not "eapi" in pull["keywords"] and not pull["manifest"]:
+        if "bump" in pull["keywords"] and not "eapi" in pull["keywords"] and pull["file_count"] < 25 and not pull["manifest"]:
             x.add_row([pull["number"],pull["title"],"version bump, but no manifest"])
 
     print(x)
