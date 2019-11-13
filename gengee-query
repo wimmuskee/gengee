@@ -1,0 +1,162 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import argparse
+import json
+from collections import OrderedDict
+from gengee.portage import getCurrentEbuilds
+from portage.versions import *
+import prettytable
+
+parser = argparse.ArgumentParser(description='Query the Gengee pull database')
+parser.add_argument('-a', '--authors', help="sort all authors", action="store_true", dest='authors')
+parser.add_argument('-c', '--conflict', help="show PR's referening the same files", action="store_true", dest='conflict')
+parser.add_argument('-g', '--categories', help="sort all categories", action="store_true", dest='categories')
+parser.add_argument('-o', '--outdated', help="show PR's that are outdated by current tree", action="store_true", dest='outdated')
+parser.add_argument('-p', '--problem', help="show PR's that have some kind of problem", action="store_true", dest='problem')
+parser.add_argument('-s', '--small', help="small QA fixes", action="store_true", dest='small')
+
+args = parser.parse_args()
+
+
+# load database
+with open("pulldb.json", "r") as f:
+    pulls = json.loads(f.read())
+
+
+if args.authors:
+    authors = {}
+    for pull in pulls:
+        if pull["user"] not in authors:
+            authors[pull["user"]] = 1
+        else:
+            authors[pull["user"]] += 1
+
+    sorted_authors = OrderedDict(sorted(authors.items(), key=lambda kv: kv[1]))
+
+    x = prettytable.PrettyTable(["author","count"])
+    for author in sorted_authors:
+        x.add_row([author,str(sorted_authors[author])])
+    print(x)
+
+
+if args.categories:
+    categories = {}
+    for pull in pulls:
+        for package in pull["packages"]:
+            category = package.split("/")[0]
+            if category not in categories:
+                categories[category] = 1
+            else:
+                categories[category] += 1
+
+    sorted_categories = OrderedDict(sorted(categories.items(), key=lambda kv: kv[1]))
+
+    x = prettytable.PrettyTable(["category","count"])
+    for category in sorted_categories:
+        x.add_row([category,str(sorted_categories[category])])
+    print(x)
+
+
+if args.conflict:
+    total_files = {}
+    for pull in pulls:
+        for file in pull["files"]:
+            if file not in total_files:
+                total_files[file] = []
+                total_files[file].append(pull)
+            else:
+                total_files[file].append(pull)
+
+    x = prettytable.PrettyTable(["file","PR","author","title"])
+    for file in total_files:
+        if len(total_files[file]) > 1:
+            filename = file
+            for pull in total_files[file]:
+                x.add_row([filename,str(pull["number"]),pull["user"],pull["title"]])
+                filename = ""
+    print(x)
+
+
+if args.outdated:
+    x = prettytable.PrettyTable(["PR","title","pull version","tree version"])
+
+    for pull in pulls:
+        # hard to determine what's happening in the PR with multiple packages, ebuilds or commits
+        if len(pull["ebuilds"]) != 1 or pull["commit_count"] > 1:
+            continue
+
+        if "do not merge" in pull["labels"]:
+            continue
+
+        package = pull["packages"][0]
+        ebuild = pull["ebuilds"][0]
+        current_ebuilds = getCurrentEbuilds(package)
+
+        if "new package" in pull["labels"]:
+            # current_ebuilds should be empty, when new package
+            if current_ebuilds:
+                x.add_row([str(pull["number"]),pull["title"],pull["ebuilds"][0],current_ebuilds[0]])
+            continue
+
+        if not current_ebuilds:
+            x.add_row([str(pull["number"]),pull["title"],pull["ebuilds"][0],"LAST RITED"])
+            continue
+
+
+        if "bump" in pull["keywords"] and not "eapi" in pull["keywords"]:
+            for current_ebuild in current_ebuilds:
+                try:
+                    if pkgcmp(pkgsplit(ebuild),pkgsplit(current_ebuild)) <= 0:
+                        x.add_row([str(pull["number"]),pull["title"],ebuild,current_ebuild])
+                        break
+                except:
+                    pass
+        else:
+            for current_ebuild in current_ebuilds:
+                try:
+                    if pkgcmp(pkgsplit(ebuild),pkgsplit(current_ebuild)) < 0:
+                        x.add_row([str(pull["number"]),pull["title"],ebuild,current_ebuild])
+                        break
+                except:
+                    pass
+
+    print(x)
+
+
+if args.problem:
+    x = prettytable.PrettyTable(["PR","title","problem"])
+
+    for pull in pulls:
+        if "bump" in pull["keywords"] and not "eapi" in pull["keywords"] and not pull["manifest"]:
+            x.add_row([pull["number"],pull["title"],"version bump, but no manifest"])
+
+    print(x)
+
+
+if args.small:
+    x = prettytable.PrettyTable(["PR","title",])
+
+    for pull in pulls:
+        if len(pull["packages"]) != 1:
+            continue
+
+        package = pull["packages"][0]
+        if package[:6] == "eclass" or package[:8] == "profiles":
+            continue
+
+        if ("bump" or "security" or "cross" ) in pull["keywords"]:
+            continue
+
+        if pull["manifest"]:
+            continue
+
+        if ("no signoff" or "do not merge") in pull["labels"]:
+            continue
+
+        if not "bug linked" in pull["labels"]:
+            continue
+
+        x.add_row([str(pull["number"]),pull["title"]])
+
+    print(x)

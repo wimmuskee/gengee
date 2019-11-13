@@ -1,0 +1,66 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+from github import Github
+import json
+
+keywords = ["bump", "revbump", "verbump", "drop", "eapi", "use", "license", "security", "static", "cross", "fix"]
+
+with open("config.json", "r") as f:
+    config = json.loads(f.read())
+
+try:
+    g = Github(config["github_token"])
+    r = g.get_repo("gentoo/gentoo")
+except Exception as e:
+    print(str(e))
+    exit()
+
+pulls = []
+
+for pull in r.get_pulls('open'):
+    print(str(pull.number) + " :: " + pull.title)
+
+    p = {
+        "comment_count": pull.comments,
+        "commit_count": pull.commits,
+        "ebuilds": set(),
+        "files": [],
+        "file_count": pull.changed_files,
+        "keywords": [],
+        "labels": [],
+        "manifest": False,
+        "number": str(pull.number),
+        "packages": set(),
+        "title": pull.title,
+        "updated": pull.updated_at.strftime("%Y-%m-%d"),
+        "user": pull.user.login
+    }
+    for l in pull.labels:
+        p["labels"].append(l.name)
+
+    # keywords, match from selected list
+    for match_kw in keywords:
+        if match_kw in p["title"].lower():
+            p["keywords"].append(match_kw)
+
+    # only get files when
+    if p["file_count"] < 25:
+        for c in pull.get_files():
+            split_fn = c.filename.split("/")
+            p["packages"].add(split_fn[0] + "/" + split_fn[1])
+            p["files"].append(c.filename)
+            if c.filename[-7:] == ".ebuild":
+                p["ebuilds"].add(split_fn[2][:-7])
+            if c.filename[-9:] == "/Manifest":
+                p["manifest"] = True
+
+
+    # set to list because not json serializable
+    p["ebuilds"] = list(p["ebuilds"])
+    p["packages"] = list(p["packages"])
+
+    pulls.append(p)
+
+with open("pulldb.json", "w") as f:
+    f.write(json.dumps(pulls))
