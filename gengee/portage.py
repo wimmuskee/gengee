@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # functions to get data out of Portage
-from os import listdir
+from os import listdir, path
 import portage
+from lxml import etree
 
 def setPackages():
     """ Set valid package names """
@@ -48,6 +49,21 @@ def getPackageMask():
         if line and not line.startswith("#"):
             masked.append(line)
     return masked
+
+def getMaintainers(package,repopath):
+    """ Return a list of listed maintainers for a package """
+    if not path.isdir(repopath + "/" + package):
+        return []
+
+    if not path.isfile(repopath + "/" + package + "/metadata.xml"):
+        return []
+
+    maintainers = []
+    mdxml = etree.parse(repopath + "/" + package + "/metadata.xml")
+    for maintainer in mdxml.xpath("/pkgmetadata/maintainer/email"):
+        maintainers.append(maintainer.text)
+
+    return maintainers
 
 def getRepoPath():
     """ Returns system Gentoo repository 

@@ -8,6 +8,7 @@ Dependencies
 * Portage
 * PyGithub
 * prettytable
+* lxml
 
 ## Usage
 There are 2 commands.
@@ -17,5 +18,5 @@ There are 2 commands.
 
 ## todo
 * see PR's that are in the package.mask
-* assignee sort?
 * provide optional keywords for "small" search
+* setup.py

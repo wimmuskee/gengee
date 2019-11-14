@@ -4,7 +4,7 @@
 import argparse
 import json
 from collections import OrderedDict
-from gengee.portage import getCurrentEbuilds
+from gengee.portage import *
 from portage.versions import *
 import prettytable
 
@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser(description='Query the Gengee pull database')
 parser.add_argument('-a', '--authors', help="sort all authors", action="store_true", dest='authors')
 parser.add_argument('-c', '--conflict', help="show PR's referening the same files", action="store_true", dest='conflict')
 parser.add_argument('-g', '--categories', help="sort all categories", action="store_true", dest='categories')
+parser.add_argument('-m', '--maintainers', help="sort all maintainers", action="store_true", dest='maintainers')
 parser.add_argument('-o', '--outdated', help="show PR's that are outdated by current tree", action="store_true", dest='outdated')
 parser.add_argument('-p', '--problem', help="show PR's that have some kind of problem", action="store_true", dest='problem')
 parser.add_argument('-s', '--small', help="small QA fixes", action="store_true", dest='small')
@@ -75,6 +76,34 @@ if args.conflict:
             for pull in total_files[file]:
                 x.add_row([filename,str(pull["number"]),pull["user"],pull["title"]])
                 filename = ""
+    print(x)
+
+if args.maintainers:
+    # getting repopath once
+    repo_path = getRepoPath()
+
+    packages = {}
+    for pull in pulls:
+        for package in pull["packages"]:
+            if package not in packages:
+                packages[package] = 1
+            else:
+                packages[package] += 1
+
+    maintainers = {}
+    for package in packages:
+        pmaintainers = getMaintainers(package,repo_path)
+        for m in pmaintainers:
+            if m not in maintainers:
+                maintainers[m] = packages[package]
+            else:
+                maintainers[m] += packages[package]
+
+    sorted_maintainers = OrderedDict(sorted(maintainers.items(), key=lambda kv: kv[1]))
+
+    x = prettytable.PrettyTable(["maintainer","count"])
+    for maintainer in sorted_maintainers:
+        x.add_row([maintainer,str(sorted_maintainers[maintainer])])
     print(x)
 
 
