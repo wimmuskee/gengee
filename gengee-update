@@ -1,13 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from gengee import common
 from github import Github
 import json
 
 keywords = ["bump", "revbump", "verbump", "drop", "eapi", "use", "license", "security", "static", "cross", "fix"]
-
-with open("config.json", "r") as f:
-    config = json.loads(f.read())
+config = common.getConfig()
 
 try:
     g = Github(config["github_token"])
