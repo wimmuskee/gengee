@@ -1,3 +1,4 @@
 {
-	"github_token": "repo/public_repo token"
+	"github_token": "repo/public_repo token",
+	"file_scan_max": 25
 }

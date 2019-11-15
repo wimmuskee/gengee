@@ -44,7 +44,7 @@ for pull in r.get_pulls('open'):
             p["keywords"].append(match_kw)
 
     # only get files when
-    if p["file_count"] < 25:
+    if p["file_count"] < config["file_scan_max"]:
         for c in pull.get_files():
             split_fn = c.filename.split("/")
             p["packages"].add(split_fn[0] + "/" + split_fn[1])
