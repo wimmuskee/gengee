@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import json
 from collections import OrderedDict
 from gengee import common
 from gengee.portage import *

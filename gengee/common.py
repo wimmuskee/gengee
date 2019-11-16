@@ -34,8 +34,11 @@ def getDBPath():
     if path.isfile("config.json"):
         return "pulldb.json"
     else:
-        homedir = str(Path.home())
-        return homedir + "/.cache/gengee/pulldb.json"
+        storedir = str(Path.home()) + "/.cache/gengee"
+        if not path.isdir(storedir):
+            Path(storedir).mkdir(parents=True, exist_ok=True)
+
+        return storedir + "/pulldb.json"
 
 def readDB():
     """ Try to read database file and return pulls dict """

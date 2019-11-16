@@ -3,7 +3,6 @@
 
 from gengee import common
 from github import Github
-import json
 
 keywords = ["bump", "revbump", "verbump", "drop", "eapi", "use", "license", "security", "static", "cross", "fix"]
 config = common.getConfig()
