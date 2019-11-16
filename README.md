@@ -15,9 +15,9 @@ Dependencies
 Before use, a config file needs to be set up. You can use the included example config to create your oqn, and set, for example the "public_repo" Github personal access token.
 The file can be stored in 2 locations:
 * local/dev: in the cloned gengee directory
-* user: <HOMEDIR>/.config/gengee/config.json
+* user: ~/.config/gengee/config.json
 
-If using the local/dev setup, the database file will be saved there as well, otherwise in <HOMEDIR>/.cache/gengee/config.json .
+If using the local/dev setup, the database file will be saved there as well, otherwise in ~/.cache/gengee/config.json .
 
 ## Usage
 There are 2 commands:
