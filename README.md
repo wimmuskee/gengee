@@ -3,6 +3,7 @@ A Gentoo Github PR analysis tool. Easily getting views on the open Gentoo pull r
 
 ## Installation
 The setup.py will take care of dependencies except Portage; assuming this is installed.
+An ebuild is available in the [flavour](https://github.com/wimmuskee/flavour) overlay.
 
 Dependencies
 * Portage
