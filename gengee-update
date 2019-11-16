@@ -61,5 +61,5 @@ for pull in r.get_pulls('open'):
 
     pulls.append(p)
 
-with open("pulldb.json", "w") as f:
-    f.write(json.dumps(pulls))
+# and write
+common.writeDB(pulls)

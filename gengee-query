@@ -20,11 +20,7 @@ parser.add_argument('-s', '--small', help="small QA fixes", action="store_true",
 
 args = parser.parse_args()
 config = common.getConfig()
-
-
-# load database
-with open("pulldb.json", "r") as f:
-    pulls = json.loads(f.read())
+pulls = common.readDB()
 
 
 if args.authors:
