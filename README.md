@@ -2,7 +2,7 @@
 A Gentoo Github PR analysis tool. Easily getting views on the open Gentoo pull requests that Github does not provide.
 
 ## Installation
-No setup.py or ebuild yet.
+The setup.py will take care of dependencies except Portage; assuming this is installed.
 
 Dependencies
 * Portage
