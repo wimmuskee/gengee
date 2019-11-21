@@ -109,7 +109,8 @@ if args.outdated:
 
     for pull in pulls:
         # hard to determine what's happening in the PR with multiple packages, ebuilds or commits
-        if len(pull["ebuilds"]) != 1 or pull["commit_count"] > 1:
+        # TODO, better define if we should look at packages, or just ebuilds/eclasses
+        if len(pull["packages"]) != 1 or len(pull["ebuilds"]) != 1 or pull["commit_count"] > 1:
             continue
 
         if "do not merge" in pull["labels"]:
