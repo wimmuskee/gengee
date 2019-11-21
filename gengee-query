@@ -9,10 +9,10 @@ from portage.versions import *
 import prettytable
 
 parser = argparse.ArgumentParser(description='Query the Gengee pull database')
-parser.add_argument('-a', '--authors', help="sort all authors", action="store_true", dest='authors')
+parser.add_argument('-a', '--author', nargs='?', help="show open PR's for author, if empty show all authors", metavar='author', const="[all]", dest='author')
 parser.add_argument('-c', '--conflict', help="show PR's referening the same files", action="store_true", dest='conflict')
 parser.add_argument('-g', '--categories', help="sort all categories", action="store_true", dest='categories')
-parser.add_argument('-m', '--maintainers', help="sort all maintainers", action="store_true", dest='maintainers')
+parser.add_argument('-m', '--maintainer', nargs='?', help="show open PR's for maintainer, if empty show all maintainers", metavar='maintainer', const="[all]", dest='maintainer')
 parser.add_argument('-o', '--outdated', help="show PR's that are outdated by current tree", action="store_true", dest='outdated')
 parser.add_argument('-p', '--problem', help="show PR's that have some kind of problem", action="store_true", dest='problem')
 parser.add_argument('-s', '--small', help="small QA fixes", action="store_true", dest='small')
@@ -22,7 +22,7 @@ config = common.getConfig()
 pulls = common.readDB()
 
 
-if args.authors:
+if args.author == "[all]":
     authors = {}
     for pull in pulls:
         if pull["user"] not in authors:
@@ -35,6 +35,13 @@ if args.authors:
     x = prettytable.PrettyTable(["author","count"])
     for author in sorted_authors:
         x.add_row([author,str(sorted_authors[author])])
+    print(x)
+
+if args.author and args.author != "[all]":
+    x = prettytable.PrettyTable(["PR","title"])
+    for pull in pulls:
+        if pull["user"] == args.author:
+           x.add_row([pull["number"],pull["title"]])
     print(x)
 
 
@@ -75,26 +82,14 @@ if args.conflict:
                 filename = ""
     print(x)
 
-if args.maintainers:
-    # getting repopath once
-    repo_path = getRepoPath()
-
-    packages = {}
-    for pull in pulls:
-        for package in pull["packages"]:
-            if package not in packages:
-                packages[package] = 1
-            else:
-                packages[package] += 1
-
+if args.maintainer == "[all]":
     maintainers = {}
-    for package in packages:
-        pmaintainers = getMaintainers(package,repo_path)
-        for m in pmaintainers:
-            if m not in maintainers:
-                maintainers[m] = packages[package]
+    for pull in pulls:
+        for maintainer in pull["maintainers"]:
+            if maintainer not in maintainers:
+                maintainers[maintainer] = 1
             else:
-                maintainers[m] += packages[package]
+                maintainers[maintainer] += 1
 
     sorted_maintainers = OrderedDict(sorted(maintainers.items(), key=lambda kv: kv[1]))
 
@@ -103,14 +98,20 @@ if args.maintainers:
         x.add_row([maintainer,str(sorted_maintainers[maintainer])])
     print(x)
 
+if args.maintainer and args.maintainer != "[all]":
+    x = prettytable.PrettyTable(["PR","title"])
+    for pull in pulls:
+        if args.maintainer in pull["maintainers"]:
+            x.add_row([pull["number"],pull["title"]])
+    print(x)
+
 
 if args.outdated:
     x = prettytable.PrettyTable(["PR","title","pull version","tree version"])
 
     for pull in pulls:
         # hard to determine what's happening in the PR with multiple packages, ebuilds or commits
-        # TODO, better define if we should look at packages, or just ebuilds/eclasses
-        if len(pull["packages"]) != 1 or len(pull["ebuilds"]) != 1 or pull["commit_count"] > 1:
+        if len(pull["ebuilds"]) != 1 or pull["commit_count"] > 1:
             continue
 
         if "do not merge" in pull["labels"]:

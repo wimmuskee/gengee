@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from gengee import common
+from gengee.portage import *
 from github import Github
 
 keywords = ["bump", "revbump", "verbump", "drop", "eapi", "use", "license", "security", "static", "cross", "fix"]
@@ -15,6 +16,7 @@ except Exception as e:
     exit()
 
 pulls = []
+repo_path = getRepoPath()
 
 for pull in r.get_pulls('open'):
     print(str(pull.number) + " :: " + pull.title)
@@ -23,10 +25,12 @@ for pull in r.get_pulls('open'):
         "comment_count": pull.comments,
         "commit_count": pull.commits,
         "ebuilds": set(),
+        "eclasses": set(),
         "files": [],
         "file_count": pull.changed_files,
         "keywords": [],
         "labels": [],
+        "maintainers": [],
         "manifest": False,
         "number": str(pull.number),
         "packages": set(),
@@ -46,16 +50,25 @@ for pull in r.get_pulls('open'):
     if p["file_count"] < config["file_scan_max"]:
         for c in pull.get_files():
             split_fn = c.filename.split("/")
-            p["packages"].add(split_fn[0] + "/" + split_fn[1])
+            if split_fn[0] == "eclass":
+                p["eclasses"].add(split_fn[1])
+            elif "-" not in split_fn[0]:
+                # don't do anything with license/profile
+                pass
+            else:
+                p["packages"].add(split_fn[0] + "/" + split_fn[1])
             p["files"].append(c.filename)
             if c.filename[-7:] == ".ebuild":
                 p["ebuilds"].add(split_fn[2][:-7])
             if c.filename[-9:] == "/Manifest":
                 p["manifest"] = True
 
+    for package in p["packages"]:
+        p["maintainers"] = getMaintainers(package,repo_path)
 
     # set to list because not json serializable
     p["ebuilds"] = list(p["ebuilds"])
+    p["eclasses"] = list(p["eclasses"])
     p["packages"] = list(p["packages"])
 
     pulls.append(p)
