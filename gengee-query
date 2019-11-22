@@ -76,12 +76,12 @@ if args.conflict:
             else:
                 total_files[file].append(pull)
 
-    x = prettytable.PrettyTable(["file","PR","author","title"])
+    x = prettytable.PrettyTable(["PR","title","file","author"])
     for file in total_files:
         if len(total_files[file]) > 1:
             filename = file
             for pull in total_files[file]:
-                x.add_row([filename,common.getPrValue(pull["number"],args.format),pull["user"],pull["title"]])
+                x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],filename,pull["user"]])
                 filename = ""
     common.printTable(x,args.format)
 
@@ -191,14 +191,10 @@ if args.problem:
 
 
 if args.small:
-    x = prettytable.PrettyTable(["PR","title",])
+    x = prettytable.PrettyTable(["PR","title"])
 
     for pull in pulls:
         if len(pull["packages"]) != 1:
-            continue
-
-        package = pull["packages"][0]
-        if package[:6] == "eclass" or package[:8] == "profiles":
             continue
 
         if ("bump" or "security" or "cross" ) in pull["keywords"]:
@@ -208,9 +204,6 @@ if args.small:
             continue
 
         if ("no signoff" or "do not merge") in pull["labels"]:
-            continue
-
-        if not "bug linked" in pull["labels"]:
             continue
 
         x.add_row([common.getPrValue(pull["number"],args.format),pull["title"]])
