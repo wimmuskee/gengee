@@ -22,7 +22,7 @@ If using the local/dev setup, the database file will be saved there as well, oth
 ## Usage
 There are 2 commands:
 * gengee-update: to create a local json database
-* gengee-query: to execute different views, add -h to see all views
+* gengee-query: to execute different views, add -h to see all views, output to html by adding a -f html
 
 ## todo
 * see PR's that are in the package.mask

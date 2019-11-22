@@ -61,3 +61,19 @@ def writeDB(pulls):
     except Exception as e:
         print("error writing " + dbpath + ": " + str(e))
         exit()
+
+def getPrValue(pr,format):
+    """ Returns PR number as url when format is html """
+    if format == "html":
+        return "<a href=\"https://github.com/gentoo/gentoo/pull/" + pr + "\" target=\"_blank\">" + pr + "</a>"
+    else:
+        return pr
+
+def printTable(prettytable,format):
+    """ Prints prettytable instance depending on specified format """
+    if format == "html":
+        # prettytable encodes html chars, therefore replacing them back
+        print(prettytable.get_html_string(attributes={"border":"1", "cellpadding":"2", "cellspacing":"0"}).replace("&lt;","<").replace("&gt;",">").replace("&quot;","\""))
+    else:
+        print(prettytable)
+        

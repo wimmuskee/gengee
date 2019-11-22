@@ -8,7 +8,7 @@ from gengee.portage import *
 from portage.versions import *
 import prettytable
 
-parser = argparse.ArgumentParser(description='Query the Gengee pull database')
+parser = argparse.ArgumentParser('gengee-query',description='Query the Gengee pull database')
 parser.add_argument('-a', '--author', nargs='?', help="show open PR's for author, if empty show all authors", metavar='author', const="[all]", dest='author')
 parser.add_argument('-c', '--conflict', help="show PR's referening the same files", action="store_true", dest='conflict')
 parser.add_argument('-g', '--categories', help="sort all categories", action="store_true", dest='categories')
@@ -17,6 +17,8 @@ parser.add_argument('-m', '--maintainer', nargs='?', help="show open PR's for ma
 parser.add_argument('-o', '--outdated', help="show PR's that are outdated by current tree", action="store_true", dest='outdated')
 parser.add_argument('-p', '--problem', help="show PR's that have some kind of problem", action="store_true", dest='problem')
 parser.add_argument('-s', '--small', help="small QA fixes", action="store_true", dest='small')
+formatgroup = parser.add_argument_group('format options')
+formatgroup.add_argument('-f', '--format', choices=['html','ascii'], help="main operating mode, add or update stuff", default='ascii', dest='format')
 
 args = parser.parse_args()
 config = common.getConfig()
@@ -36,14 +38,14 @@ if args.author == "[all]":
     x = prettytable.PrettyTable(["author","count"])
     for author in sorted_authors:
         x.add_row([author,str(sorted_authors[author])])
-    print(x)
+    common.printTable(x,args.format)
 
 if args.author and args.author != "[all]":
     x = prettytable.PrettyTable(["PR","title"])
     for pull in pulls:
         if pull["user"] == args.author:
-           x.add_row([pull["number"],pull["title"]])
-    print(x)
+           x.add_row([common.getPrValue(pull["number"],args.format),pull["title"]])
+    common.printTable(x,args.format)
 
 
 if args.categories:
@@ -61,7 +63,7 @@ if args.categories:
     x = prettytable.PrettyTable(["category","count"])
     for category in sorted_categories:
         x.add_row([category,str(sorted_categories[category])])
-    print(x)
+    common.printTable(x,args.format)
 
 
 if args.conflict:
@@ -79,9 +81,10 @@ if args.conflict:
         if len(total_files[file]) > 1:
             filename = file
             for pull in total_files[file]:
-                x.add_row([filename,str(pull["number"]),pull["user"],pull["title"]])
+                x.add_row([filename,common.getPrValue(pull["number"],args.format),pull["user"],pull["title"]])
                 filename = ""
-    print(x)
+    common.printTable(x,args.format)
+
 
 if args.label == "[all]":
     labels = {}
@@ -97,14 +100,14 @@ if args.label == "[all]":
     x = prettytable.PrettyTable(["label","count"])
     for label in sorted_labels:
         x.add_row([label,str(sorted_labels[label])])
-    print(x)
+    common.printTable(x,args.format)
 
 if args.label and args.label != "[all]":
     x = prettytable.PrettyTable(["PR","title"])
     for pull in pulls:
         if args.label in pull["labels"]:
-            x.add_row([pull["number"],pull["title"]])
-    print(x)
+            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"]])
+    common.printTable(x,args.format)
 
 
 if args.maintainer == "[all]":
@@ -121,14 +124,14 @@ if args.maintainer == "[all]":
     x = prettytable.PrettyTable(["maintainer","count"])
     for maintainer in sorted_maintainers:
         x.add_row([maintainer,str(sorted_maintainers[maintainer])])
-    print(x)
+    common.printTable(x,args.format)
 
 if args.maintainer and args.maintainer != "[all]":
     x = prettytable.PrettyTable(["PR","title"])
     for pull in pulls:
         if args.maintainer in pull["maintainers"]:
-            x.add_row([pull["number"],pull["title"]])
-    print(x)
+            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"]])
+    common.printTable(x,args.format)
 
 
 if args.outdated:
@@ -149,11 +152,11 @@ if args.outdated:
         if "new package" in pull["labels"]:
             # current_ebuilds should be empty, when new package
             if current_ebuilds:
-                x.add_row([str(pull["number"]),pull["title"],pull["ebuilds"][0],current_ebuilds[0]])
+                x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],pull["ebuilds"][0],current_ebuilds[0]])
             continue
 
         if not current_ebuilds:
-            x.add_row([str(pull["number"]),pull["title"],pull["ebuilds"][0],"LAST RITED"])
+            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],pull["ebuilds"][0],"LAST RITED"])
             continue
 
 
@@ -161,7 +164,7 @@ if args.outdated:
             for current_ebuild in current_ebuilds:
                 try:
                     if pkgcmp(pkgsplit(ebuild),pkgsplit(current_ebuild)) <= 0:
-                        x.add_row([str(pull["number"]),pull["title"],ebuild,current_ebuild])
+                        x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],ebuild,current_ebuild])
                         break
                 except:
                     pass
@@ -169,12 +172,12 @@ if args.outdated:
             for current_ebuild in current_ebuilds:
                 try:
                     if pkgcmp(pkgsplit(ebuild),pkgsplit(current_ebuild)) < 0:
-                        x.add_row([str(pull["number"]),pull["title"],ebuild,current_ebuild])
+                        x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],ebuild,current_ebuild])
                         break
                 except:
                     pass
 
-    print(x)
+    common.printTable(x,args.format)
 
 
 if args.problem:
@@ -182,9 +185,9 @@ if args.problem:
 
     for pull in pulls:
         if "bump" in pull["keywords"] and not "eapi" in pull["keywords"] and pull["file_count"] < config["file_scan_max"] and not pull["manifest"]:
-            x.add_row([pull["number"],pull["title"],"version bump, but no manifest"])
+            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],"version bump, but no manifest"])
 
-    print(x)
+    common.printTable(x,args.format)
 
 
 if args.small:
@@ -210,6 +213,6 @@ if args.small:
         if not "bug linked" in pull["labels"]:
             continue
 
-        x.add_row([str(pull["number"]),pull["title"]])
+        x.add_row([common.getPrValue(pull["number"],args.format),pull["title"]])
 
-    print(x)
+    common.printTable(x,args.format)
