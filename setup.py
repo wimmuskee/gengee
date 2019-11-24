@@ -6,7 +6,7 @@ def read(fname):
 
 setup(
     name = "gengee",
-    version = "1.2.0",
+    version = "1.2.1",
     author = "Wim Muskee",
     author_email = "wimmuskee@gmail.com",
     url = "https://github.com/wimmuskee/gengee",

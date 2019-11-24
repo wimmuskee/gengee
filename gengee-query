@@ -41,10 +41,10 @@ if args.author == "[all]":
     common.printTable(x,args.format)
 
 if args.author and args.author != "[all]":
-    x = prettytable.PrettyTable(["PR","title"])
+    x = prettytable.PrettyTable(["PR","title","comments"])
     for pull in pulls:
         if pull["user"] == args.author:
-           x.add_row([common.getPrValue(pull["number"],args.format),pull["title"]])
+           x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],pull["comment_count"]])
     common.printTable(x,args.format)
 
 
@@ -103,10 +103,10 @@ if args.label == "[all]":
     common.printTable(x,args.format)
 
 if args.label and args.label != "[all]":
-    x = prettytable.PrettyTable(["PR","title"])
+    x = prettytable.PrettyTable(["PR","title","comments"])
     for pull in pulls:
         if args.label in pull["labels"]:
-            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"]])
+            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],pull["comment_count"]])
     common.printTable(x,args.format)
 
 
@@ -127,10 +127,10 @@ if args.maintainer == "[all]":
     common.printTable(x,args.format)
 
 if args.maintainer and args.maintainer != "[all]":
-    x = prettytable.PrettyTable(["PR","title"])
+    x = prettytable.PrettyTable(["PR","title","comments"])
     for pull in pulls:
         if args.maintainer in pull["maintainers"]:
-            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"]])
+            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],pull["comment_count"]])
     common.printTable(x,args.format)
 
 
@@ -191,7 +191,7 @@ if args.problem:
 
 
 if args.small:
-    x = prettytable.PrettyTable(["PR","title"])
+    x = prettytable.PrettyTable(["PR","title","comments"])
 
     for pull in pulls:
         if len(pull["packages"]) != 1:
@@ -206,6 +206,6 @@ if args.small:
         if ("no signoff" or "do not merge") in pull["labels"]:
             continue
 
-        x.add_row([common.getPrValue(pull["number"],args.format),pull["title"]])
+        x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],pull["comment_count"]])
 
     common.printTable(x,args.format)
