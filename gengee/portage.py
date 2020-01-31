@@ -30,7 +30,7 @@ def getCurrentEbuilds(package):
 
     try:
         for package_file in listdir(getRepoPath() + "/" + package):
-            if package_file[-7:] == ".ebuild" and package_file[-11:] != "9999.ebuild":
+            if package_file[-7:] == ".ebuild":
                 current_ebuilds.append(package_file[0:-7])
     except FileNotFoundError:
         pass

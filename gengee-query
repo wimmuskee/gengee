@@ -162,6 +162,9 @@ if args.outdated:
 
         if "bump" in pull["keywords"] and not "eapi" in pull["keywords"]:
             for current_ebuild in current_ebuilds:
+                if current_ebuild[-4:] == "9999":
+                    continue
+
                 try:
                     if pkgcmp(pkgsplit(ebuild),pkgsplit(current_ebuild)) <= 0:
                         x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],ebuild,current_ebuild])
@@ -170,6 +173,9 @@ if args.outdated:
                     pass
         else:
             for current_ebuild in current_ebuilds:
+                if current_ebuild[-4:] == "9999":
+                    continue
+
                 try:
                     if pkgcmp(pkgsplit(ebuild),pkgsplit(current_ebuild)) < 0:
                         x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],ebuild,current_ebuild])
