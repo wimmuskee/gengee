@@ -184,9 +184,14 @@ if args.outdated:
 if args.problem:
     x = prettytable.PrettyTable(["PR","title","problem"])
 
+    masked = getPackageMask()
     for pull in pulls:
         if "bump" in pull["keywords"] and not "eapi" in pull["keywords"] and pull["file_count"] < config["file_scan_max"] and not pull["manifest"]:
             x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],"version bump, but no manifest"])
+
+        for package in pull["packages"]:
+            if package in masked:
+                 x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],"package " + package + " in package.mask"])
 
     common.printTable(x,args.format)
 

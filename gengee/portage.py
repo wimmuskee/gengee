@@ -38,15 +38,17 @@ def getCurrentEbuilds(package):
     return current_ebuilds
 
 def getPackageMask():
-    """ Return currently masked packages """
+    """ Return currently masked packages, just complete packages
+    perhaps later more detailed version matching """
     with open(getRepoPath() + "/profiles/package.mask", "r") as f:
         packagemask = f.readlines()
 
     packagemask = [x.strip() for x in packagemask]
+    blacklist = ["dev-libs/cygwin","dev-util/mingw64-runtime","sys-libs/newlib","dev-embedded/avr-libc"]
 
     masked = []
     for line in packagemask:
-        if line and not line.startswith("#"):
+        if line[:1].isalpha() and line not in blacklist:
             masked.append(line)
     return masked
 
