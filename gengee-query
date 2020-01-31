@@ -149,16 +149,11 @@ if args.outdated:
         ebuild = pull["ebuilds"][0]
         current_ebuilds = getCurrentEbuilds(package)
 
-        if "new package" in pull["labels"]:
-            # current_ebuilds should be empty, when new package
-            if current_ebuilds:
-                x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],pull["ebuilds"][0],current_ebuilds[0]])
+        # only add LAST RITED when not a new package
+        # when new package, it should go to the other checks
+        if not current_ebuilds and not "new package" in pull["labels"]:
+            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],ebuild,"LAST RITED"])
             continue
-
-        if not current_ebuilds:
-            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],pull["ebuilds"][0],"LAST RITED"])
-            continue
-
 
         if "bump" in pull["keywords"] and not "eapi" in pull["keywords"]:
             for current_ebuild in current_ebuilds:
