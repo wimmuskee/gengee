@@ -19,7 +19,8 @@ pulls = []
 repo_path = getRepoPath()
 
 for pull in r.get_pulls('open'):
-    print(str(pull.number) + " :: " + pull.title)
+    PR = pull.number
+    print(str(PR) + " :: " + pull.title)
 
     p = {
         "comment_count": pull.comments,
@@ -32,7 +33,8 @@ for pull in r.get_pulls('open'):
         "labels": [],
         "maintainers": [],
         "manifest": False,
-        "number": str(pull.number),
+        "mergeable": pull.mergeable,
+        "number": str(PR),
         "packages": set(),
         "title": pull.title,
         "updated": pull.updated_at.strftime("%Y-%m-%d"),

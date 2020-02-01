@@ -193,6 +193,10 @@ if args.problem:
             if package in masked:
                  x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],"package " + package + " in package.mask"])
 
+# no reliable to retrieve
+#        if not pull["mergeable"]:
+#            x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],"merge conflict"])
+
     common.printTable(x,args.format)
 
 
