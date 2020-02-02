@@ -1,13 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from gengee import common
+from gengee import common, database
 from gengee.portage import *
 from github import Github
 
 keywords = ["bump", "revbump", "verbump", "drop", "eapi", "use", "license", "security", "static", "cross", "fix"]
 config = common.getConfig()
+repo_path = getRepoPath()
+current_db = database.Database(config["dbpath"])
+updated_db = database.Database(config["dbpath"])
 
+# check if we can use existing db for cache
+try:
+    current_db.read()
+except (FileNotFoundError, SyntaxError, ValueError):
+    print("no valid existing db found")
+    pass
+
+# connect to Github or die trying
 try:
     g = Github(config["github_token"])
     r = g.get_repo("gentoo/gentoo")
@@ -15,9 +26,8 @@ except Exception as e:
     print(str(e))
     exit()
 
-pulls = []
-repo_path = getRepoPath()
 
+# harvest and update db with PR's
 for pull in r.get_pulls('open'):
     PR = pull.number
     print(str(PR) + " :: " + pull.title)
@@ -38,6 +48,7 @@ for pull in r.get_pulls('open'):
         "packages": set(),
         "title": pull.title,
         "updated": pull.updated_at.strftime("%Y-%m-%d"),
+        "updated_ts": int(pull.updated_at.timestamp()),
         "user": pull.user.login
     }
     for l in pull.labels:
@@ -73,7 +84,7 @@ for pull in r.get_pulls('open'):
     p["eclasses"] = list(p["eclasses"])
     p["packages"] = list(p["packages"])
 
-    pulls.append(p)
+    updated_db.addPull(PR,p)
 
 # and write
-common.writeDB(pulls)
+updated_db.write()

@@ -3,7 +3,7 @@
 
 import argparse
 from collections import OrderedDict
-from gengee import common
+from gengee import common, database
 from gengee.portage import *
 from portage.versions import *
 import prettytable
@@ -22,12 +22,19 @@ formatgroup.add_argument('-f', '--format', choices=['html','ascii'], help="main 
 
 args = parser.parse_args()
 config = common.getConfig()
-pulls = common.readDB()
+db = database.Database(config["dbpath"])
+
+try:
+    db.read()
+    pulls = db.getPulls()
+except Exception as e:
+    print(str(e))
+    exit()
 
 
 if args.author == "[all]":
     authors = {}
-    for pull in pulls:
+    for pull in pulls:  
         if pull["user"] not in authors:
             authors[pull["user"]] = 1
         else:
