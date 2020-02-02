@@ -14,8 +14,14 @@ def getConfig():
     # local config takes precendence
     if path.isfile(dev_config):
         configpath = dev_config
+        dbpath = "pulldb.json"
     elif path.isfile(user_config):
         configpath = user_config
+        storedir = str(Path.home()) + "/.cache/gengee"
+        dbpath = storedir + "/pulldb.json"
+        # make sure we have a valid storedir to return
+        if not path.isdir(storedir):
+            Path(storedir).mkdir(parents=True, exist_ok=True)
     else:
         print("no config found")
         exit()
@@ -23,44 +29,12 @@ def getConfig():
     try:
         with open(configpath, "r") as f:
             config = json.loads(f.read())
+            config["dbpath"] = dbpath
             return config
     except Exception as e:
         print("error reading " + configpath + ": " + str(e))
         exit()
 
-def getDBPath():
-    """ Return path of DB file """
-    # using local db when local config is present
-    if path.isfile("config.json"):
-        return "pulldb.json"
-    else:
-        storedir = str(Path.home()) + "/.cache/gengee"
-        if not path.isdir(storedir):
-            Path(storedir).mkdir(parents=True, exist_ok=True)
-
-        return storedir + "/pulldb.json"
-
-def readDB():
-    """ Try to read database file and return pulls dict """
-    dbpath = getDBPath()
-    try:
-        with open(dbpath, "r") as f:
-            pulls = json.loads(f.read())
-        return pulls
-    except Exception as e:
-        print("error reading " + dbpath + ": " + str(e))
-        exit()
-
-def writeDB(pulls):
-    """ Try to write pulls to database file """
-    dbpath = getDBPath()
-    try:
-        with open(dbpath, "w") as f:
-            f.write(json.dumps(pulls))
-            print("wrote database to " + dbpath)
-    except Exception as e:
-        print("error writing " + dbpath + ": " + str(e))
-        exit()
 
 def getPrValue(pr,format):
     """ Returns PR number as url when format is html """
@@ -69,11 +43,11 @@ def getPrValue(pr,format):
     else:
         return pr
 
+
 def printTable(prettytable,format):
     """ Prints prettytable instance depending on specified format """
     if format == "html":
         # prettytable encodes html chars, therefore replacing them back
         print(prettytable.get_html_string(attributes={"border":"1", "cellpadding":"2", "cellspacing":"0"}).replace("&lt;","<").replace("&gt;",">").replace("&quot;","\""))
     else:
-        print(prettytable)
-        
+        print(prettytable)        

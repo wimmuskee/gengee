@@ -1,30 +1,41 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from gengee import common
+from gengee import common, database
 from gengee.portage import *
 from github import Github
 
 keywords = ["bump", "revbump", "verbump", "drop", "eapi", "use", "license", "security", "static", "cross", "fix"]
 config = common.getConfig()
+repo_path = getRepoPath()
+current_db = database.Database(config["dbpath"])
+updated_db = database.Database(config["dbpath"])
 
+# check if we can use existing db for cache
 try:
-    g = Github(config["github_token"])
+    current_db.read()
+except (FileNotFoundError, SyntaxError, ValueError):
+    print("no valid existing db found")
+    pass
+
+# connect to Github or die trying
+try:
+    g = Github(config["github_token"], user_agent="Gengee/PyGithub")
     r = g.get_repo("gentoo/gentoo")
 except Exception as e:
     print(str(e))
     exit()
 
-pulls = []
-repo_path = getRepoPath()
 
+# harvest and update db with PR's
 for pull in r.get_pulls('open'):
-    PR = pull.number
-    print(str(PR) + " :: " + pull.title)
+    PR = str(pull.number)
+    print(PR + " :: " + pull.title)
 
     p = {
         "comment_count": pull.comments,
         "commit_count": pull.commits,
+        "commits": {},
         "ebuilds": set(),
         "eclasses": set(),
         "files": [],
@@ -34,10 +45,11 @@ for pull in r.get_pulls('open'):
         "maintainers": [],
         "manifest": False,
         "mergeable": pull.mergeable,
-        "number": str(PR),
+        "number": PR,
         "packages": set(),
         "title": pull.title,
         "updated": pull.updated_at.strftime("%Y-%m-%d"),
+        "updated_ts": int(pull.updated_at.timestamp()),
         "user": pull.user.login
     }
     for l in pull.labels:
@@ -48,23 +60,37 @@ for pull in r.get_pulls('open'):
         if match_kw in p["title"].lower():
             p["keywords"].append(match_kw)
 
-    # only get files when
-    if p["file_count"] < config["file_scan_max"]:
-        for c in pull.get_files():
-            split_fn = c.filename.split("/")
-            if split_fn[0] == "eclass":
-                p["eclasses"].add(split_fn[1])
-            elif "-" not in split_fn[0]:
-                # don't do anything with license/profile
-                pass
-            else:
-                p["packages"].add(split_fn[0] + "/" + split_fn[1])
-            p["files"].append(c.filename)
-            if c.filename[-7:] == ".ebuild":
-                p["ebuilds"].add(split_fn[2][:-7])
-            if c.filename[-9:] == "/Manifest":
-                p["manifest"] = True
+    # check if we can use PR data from previous run
+    if current_db.checkCacheStatus(PR,p["updated_ts"]):
+        p["eclasses"] = current_db.getPullAttribute(PR,"eclasses")
+        p["packages"] = current_db.getPullAttribute(PR,"packages")
+        p["ebuilds"] = current_db.getPullAttribute(PR,"ebuilds")
+        p["manifest"] = current_db.getPullAttribute(PR,"manifest")
+        p["commits"] = current_db.getPullAttribute(PR,"commits")
+    else:
+        # conditional retrieval of extra's
+        if p["file_count"] < config["file_scan_max"]:
+            for c in pull.get_files():
+                split_fn = c.filename.split("/")
+                if split_fn[0] == "eclass":
+                    p["eclasses"].add(split_fn[1])
+                elif "-" not in split_fn[0]:
+                    # don't do anything with license/profile
+                    pass
+                else:
+                    p["packages"].add(split_fn[0] + "/" + split_fn[1])
+                p["files"].append(c.filename)
+                if c.filename[-7:] == ".ebuild":
+                    p["ebuilds"].add(split_fn[2][:-7])
+                if c.filename[-9:] == "/Manifest":
+                    p["manifest"] = True
 
+        if p["commit_count"] < 20:
+            for c in pull.get_commits():
+                p["commits"][c.sha] = { "message": c.commit.message }
+
+
+    # retrieve maintainers from portage repo
     for package in p["packages"]:
         p["maintainers"] = getMaintainers(package,repo_path)
 
@@ -73,7 +99,7 @@ for pull in r.get_pulls('open'):
     p["eclasses"] = list(p["eclasses"])
     p["packages"] = list(p["packages"])
 
-    pulls.append(p)
+    updated_db.addPull(PR,p)
 
 # and write
-common.writeDB(pulls)
+updated_db.write()
