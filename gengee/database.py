@@ -38,8 +38,25 @@ class Database:
             print("error writing " + self.dbpath + ": " + str(e))
             exit()
 
+
     def addPull(self,PR,pull):
         self.db["pulls"][PR] = pull
 
     def getPulls(self):
         return list(self.db["pulls"].values())
+
+    def getPullAttribute(self,PR,attribute):
+        """ Used when copying values from cache. """
+        return self.db["pulls"][PR][attribute]
+
+
+    def checkCacheStatus(self,PR,updated_ts):
+        if PR not in self.db["pulls"]:
+            return False
+
+        if updated_ts > self.db["pulls"][PR]["updated_ts"]:
+            return False
+
+        return True
+
+

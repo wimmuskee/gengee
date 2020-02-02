@@ -29,8 +29,8 @@ except Exception as e:
 
 # harvest and update db with PR's
 for pull in r.get_pulls('open'):
-    PR = pull.number
-    print(str(PR) + " :: " + pull.title)
+    PR = str(pull.number)
+    print(PR + " :: " + pull.title)
 
     p = {
         "comment_count": pull.comments,
@@ -44,7 +44,7 @@ for pull in r.get_pulls('open'):
         "maintainers": [],
         "manifest": False,
         "mergeable": pull.mergeable,
-        "number": str(PR),
+        "number": PR,
         "packages": set(),
         "title": pull.title,
         "updated": pull.updated_at.strftime("%Y-%m-%d"),
@@ -59,23 +59,32 @@ for pull in r.get_pulls('open'):
         if match_kw in p["title"].lower():
             p["keywords"].append(match_kw)
 
-    # only get files when
-    if p["file_count"] < config["file_scan_max"]:
-        for c in pull.get_files():
-            split_fn = c.filename.split("/")
-            if split_fn[0] == "eclass":
-                p["eclasses"].add(split_fn[1])
-            elif "-" not in split_fn[0]:
-                # don't do anything with license/profile
-                pass
-            else:
-                p["packages"].add(split_fn[0] + "/" + split_fn[1])
-            p["files"].append(c.filename)
-            if c.filename[-7:] == ".ebuild":
-                p["ebuilds"].add(split_fn[2][:-7])
-            if c.filename[-9:] == "/Manifest":
-                p["manifest"] = True
+    # check if we can use PR data from previous run
+    if current_db.checkCacheStatus(PR,p["updated_ts"]):
+        p["eclasses"] = current_db.getPullAttribute(PR,"eclasses")
+        p["packages"] = current_db.getPullAttribute(PR,"packages")
+        p["ebuilds"] = current_db.getPullAttribute(PR,"ebuilds")
+        p["manifest"] = current_db.getPullAttribute(PR,"manifest")
+    else:
+        # only get files when
+        if p["file_count"] < config["file_scan_max"]:
+            print("getting files")
+            for c in pull.get_files():
+                split_fn = c.filename.split("/")
+                if split_fn[0] == "eclass":
+                    p["eclasses"].add(split_fn[1])
+                elif "-" not in split_fn[0]:
+                    # don't do anything with license/profile
+                    pass
+                else:
+                    p["packages"].add(split_fn[0] + "/" + split_fn[1])
+                p["files"].append(c.filename)
+                if c.filename[-7:] == ".ebuild":
+                    p["ebuilds"].add(split_fn[2][:-7])
+                if c.filename[-9:] == "/Manifest":
+                    p["manifest"] = True
 
+    # retrieve maintainers from portage repo
     for package in p["packages"]:
         p["maintainers"] = getMaintainers(package,repo_path)
 
