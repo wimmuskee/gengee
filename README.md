@@ -25,6 +25,6 @@ There are 2 commands:
 * gengee-query: to execute different views, add -h to see all views, output to html by adding a -f html
 
 ## todo
-* see PR's that are in the package.mask
 * provide optional keywords for "small" search
-* setup.py
+* some unit tests
+* perhaps better distinction between analysis and display of errors
