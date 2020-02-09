@@ -42,6 +42,7 @@ for pullrequest in r.get_pulls('open'):
         PR.p["ebuilds"] = current_db.getPullAttribute(PR.nr,"ebuilds")
         PR.p["manifest"] = current_db.getPullAttribute(PR.nr,"manifest")
         PR.p["commits"] = current_db.getPullAttribute(PR.nr,"commits")
+        PR.p["bugs"] = current_db.getPullAttribute(PR.nr,"bugs")
     else:
         # conditional retrieval of extra's
         if PR.p["file_count"] < config["file_scan_max"]:

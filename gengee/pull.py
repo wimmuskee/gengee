@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import re
+
 class Pull:
     def __init__(self):
         self.nr = ""
         self.p = {
+            "bugs": {},
             "comment_count": 0,
             "commit_count": 0,
             "commits": {},
@@ -23,6 +26,8 @@ class Pull:
             "updated_ts": 0,
             "user": ""
         }
+
+        self.re_bug = re.compile('^(Bug|Closes|Fixes):\ ?(https://bugs.gentoo.org/[0-9]+)$')
 
     def __str__(self):
         return self.nr
@@ -74,4 +79,13 @@ class Pull:
     def setCommitData(self,commits):
         """ Use Github commit objects to set appropriate attributes """
         for c in commits:
-            self.p["commits"][c.sha] = { "message": c.commit.message }
+            self.p["commits"][c.sha] = {
+                "message": c.commit.message,
+                "bugs": []
+            }
+            messagelines = c.commit.message.splitlines()
+            for line in messagelines:
+                result = self.re_bug.match(line)
+                if result and len(result.groups()) == 2:
+                    self.p["commits"][c.sha]["bugs"].append(result.group(2))
+                    self.p["bugs"][result.group(2)] = ""
