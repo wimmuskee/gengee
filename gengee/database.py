@@ -40,6 +40,11 @@ class Database:
 
 
     def addPull(self,PR,pull):
+        # set to list because set is not json serializable
+        pull["ebuilds"] = list(pull["ebuilds"])
+        pull["eclasses"] = list(pull["eclasses"])
+        pull["packages"] = list(pull["packages"])
+
         self.db["pulls"][PR] = pull
 
     def getPulls(self):
