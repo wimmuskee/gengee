@@ -4,6 +4,7 @@
 from gengee import common, database, pull, __version__ as version
 from gengee.portage import *
 from github import Github
+import requests
 
 keywords = ["bump", "revbump", "verbump", "drop", "eapi", "use", "license", "security", "static", "cross", "fix"]
 config = common.getConfig()
@@ -54,6 +55,12 @@ for pullrequest in r.get_pulls('open'):
     # retrieve maintainers from portage repo
     for package in PR.p["packages"]:
         PR.p["maintainers"] = getMaintainers(package,repo_path)
+
+    # retrieving bugzilla status
+    for bug in PR.p["bugs"]:
+        r = requests.get("https://bugs.gentoo.org/rest/bug/" + bug + "?include_fields=status")
+        bugdata = r.json()
+        PR.p["bugs"][bug] = bugdata["bugs"][0]["status"]
 
     updated_db.addPull(PR.nr,PR.p)
 

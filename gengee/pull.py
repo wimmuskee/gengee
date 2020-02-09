@@ -88,4 +88,5 @@ class Pull:
                 result = self.re_bug.match(line)
                 if result and len(result.groups()) == 2:
                     self.p["commits"][c.sha]["bugs"].append(result.group(2))
-                    self.p["bugs"][result.group(2)] = ""
+                    bugnr = result.group(2).split("/")[3]
+                    self.p["bugs"][bugnr] = ""
