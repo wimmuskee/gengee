@@ -191,6 +191,15 @@ if args.outdated:
     common.printTable(x,args.format)
 
 
+    x = prettytable.PrettyTable(["PR","title","bugid","issue"])
+    for pull in pulls:
+        for bug in pull["bugs"]:
+            if pull["bugs"][bug] == "RESOLVED":
+                x.add_row([common.getPrValue(pull["number"],args.format),pull["title"],"#" + bug,"PR references resolved bug"])
+
+    common.printTable(x,args.format)
+
+
 if args.problem:
     x = prettytable.PrettyTable(["PR","title","problem"])
 
