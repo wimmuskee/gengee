@@ -51,3 +51,15 @@ def printTable(prettytable,format):
         print(prettytable.get_html_string(attributes={"border":"1", "cellpadding":"2", "cellspacing":"0"}).replace("&lt;","<").replace("&gt;",">").replace("&quot;","\""))
     else:
         print(prettytable)        
+
+def checkCompatibleDatabase(app_version,db_version):
+    """ Checks if current database version has compatible
+    major and minor version."""
+    if int(app_version.split(".")[0]) > int(db_version.split(".")[0]):
+        return False
+
+    if int(app_version.split(".")[1]) > int(db_version.split(".")[1]):
+        return False
+
+    return True
+

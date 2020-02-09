@@ -31,6 +31,9 @@ except Exception as e:
     print(str(e))
     exit()
 
+if not common.checkCompatibleDatabase(version,db.db["version"]):
+    print("database outdated, update first")
+    exit()
 
 if args.author == "[all]":
     authors = {}

@@ -36,7 +36,7 @@ for pullrequest in r.get_pulls('open'):
     PR.setKeywords(keywords)
 
     # check if we can use PR data from previous run
-    if current_db.checkCacheStatus(PR,PR.p["updated_ts"]):
+    if current_db.checkCacheStatus(PR,PR.p["updated_ts"]) and common.checkCompatibleDatabase(version,current_db.db["version"]):
         PR.p["eclasses"] = current_db.getPullAttribute(PR.nr,"eclasses")
         PR.p["packages"] = current_db.getPullAttribute(PR.nr,"packages")
         PR.p["ebuilds"] = current_db.getPullAttribute(PR.nr,"ebuilds")
@@ -58,4 +58,4 @@ for pullrequest in r.get_pulls('open'):
     updated_db.addPull(PR.nr,PR.p)
 
 # and write
-updated_db.write()
+updated_db.write(version)

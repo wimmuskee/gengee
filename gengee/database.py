@@ -5,7 +5,8 @@ import json
 
 class Database:
     db = {
-        "pulls": {}
+        "pulls": {},
+        "version": "0.0.0"
     }
 
     def __init__(self,dbpath):
@@ -27,9 +28,13 @@ class Database:
 
         # if no exceptions, set object
         self.db = db
+        if "version" not in self.db:
+            self.db["version"] = "0.0.0"
 
-    def write(self):
+
+    def write(self,version):
         """ Try to write pulls to database file """
+        self.db["version"] = version
         try:
             with open(self.dbpath, "w") as f:
                 f.write(json.dumps(self.db))
