@@ -3,7 +3,7 @@
 
 import argparse
 from collections import OrderedDict
-from gengee import common, database
+from gengee import common, database, __version__ as version
 from gengee.portage import *
 from portage.versions import *
 import prettytable
