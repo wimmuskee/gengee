@@ -58,9 +58,10 @@ for pullrequest in r.get_pulls('open'):
 
     # retrieving bugzilla status
     for bug in PR.p["bugs"]:
-        r = requests.get("https://bugs.gentoo.org/rest/bug/" + bug + "?include_fields=status")
+        r = requests.get("https://bugs.gentoo.org/rest/bug/" + bug + "?include_fields=status,resolution")
         bugdata = r.json()
-        PR.p["bugs"][bug] = bugdata["bugs"][0]["status"]
+        PR.p["bugs"][bug] = bugdata["bugs"][0]["status"] + "/" + bugdata["bugs"][0]["resolution"]
+        # todo, perhaps track dupe_of in case of DUPLICATE
 
     updated_db.addPull(PR.nr,PR.p)
 
