@@ -61,6 +61,10 @@ class Pull:
         """ Use Github file objects to set appropriate attributes """
         for c in files:
             split_fn = c.filename.split("/")
+            # we at least want files in category/package subdir     
+            if len(split_fn) < 3:
+                continue
+
             if split_fn[0] == "eclass":
                 self.p["eclasses"].add(split_fn[1])
             elif "-" not in split_fn[0]:
@@ -74,7 +78,6 @@ class Pull:
                 self.p["ebuilds"].add(split_fn[2][:-7])
             if c.filename[-9:] == "/Manifest":
                 self.p["manifest"] = True
-
 
     def setCommitData(self,commits):
         """ Use Github commit objects to set appropriate attributes """
